@@ -369,33 +369,154 @@
   };
 
   const DIALOGUES = {
+    // Frases de bienvenida cálidas y espontáneas
     welcome: [
-      "¡Hola amiguito! Soy Silabín el ratón explorador. ¡Vamos a descubrir las sílabas juntos!",
-      "¡Bienvenido! Cada palabra tiene música. ¡Descubramos cuántos golpes de voz tiene!",
-      "¡Qué alegría verte! ¿Listo para una gran aventura de palabras?"
+      "¡Hola amiguito! Soy Silabín el ratón explorador. ¡Vamos a descubrir la música de las palabras juntos!",
+      "¡Bienvenido a nuestro bosque encantado! Abre bien las orejitas, que cada palabra tiene su propio ritmo.",
+      "¡Qué alegría tan grande verte por aquí! Hoy vamos a jugar, aplaudir y aprender un montón.",
+      "¡Hola, hola! Ya me puse mi gorrita de explorador. ¿Listo para atrapar sílabas conmigo?",
+      "¡Aquí está mi compañero favorito! Vamos a contar cuántos saltitos da cada palabra.",
+      "¡Hola campeón! Mis bigotes me dicen que hoy vas a resolverlo todo de maravilla.",
+      "¡Qué gran día para una aventura! Escucha con atención y déjate llevar por el ritmo.",
+      "¡Hola amiguito! ¿Sabías que las palabras se pueden partir como un rico pastel? ¡Ven a probar!",
+      "¡Yupi, ya llegaste! Estaba mordisqueando un pedacito de queso esperándote. ¡A jugar!",
+      "¡Bienvenido! Prepara esas manitas para dar palmadas mágicas.",
+      "¡Hola, qué emoción! Cada palabra que descubras encenderá una estrella en nuestro camino.",
+      "¡Bienvenido de vuelta, pequeño explorador! Hoy tenemos palabras fascinantes por descubrir.",
+      "¡Hola amiguito! Ponte cómodo, escucha mi voz y divirtámonos juntos.",
+      "¡Qué felicidad! Soy Silabín y seré tu guía en este viaje por los sonidos de las palabras.",
+      "¡Hola, hola! ¿Oyes eso? ¡Es la aventura que nos está llamando! ¡Empecemos ya!",
+      "¡Bienvenido al juego! Da un brinco de alegría, que hoy aprenderemos jugando."
     ],
+
+    // Frases de acierto variadas, alegres y de orgullo genuino
     correct: [
-      "¡Bravo, lo lograste! ¡Tienes un oído genial!",
-      "¡Eso es! ¡Eres un súper detective de palabras!",
-      "¡Guau, qué bien! ¡Acertaste!",
-      "¡Choca esos cinco! ¡Excelente respuesta!",
-      "¡Perfecto! Cada vez avanzamos más en el camino mágico."
+      "¡Bravo, diste justo en el clavo! ¡Tienes oído de detective!",
+      "¡Eso es, genial! ¡Lo hiciste parecer facilísimo!",
+      "¡Guau, qué puntería! Acertaste a la primera.",
+      "¡Choca esos cinco! ¡Excelente respuesta, amiguito!",
+      "¡Siii! Mis bigotes tiemblan de pura emoción cuando aciertas así.",
+      "¡Oído de lince! Contaste cada sílaba a la perfección.",
+      "¡Magnífico! Cada vez nos acercamos más al gran diploma.",
+      "¡Eso estuvo brillante! ¡Qué buen ritmo tienes!",
+      "¡Yujuuu! ¡Respuesta perfecta! Me encanta jugar contigo.",
+      "¡Impresionante! ¡Eres todo un experto en sílabas!",
+      "¡Bien hecho! Tu esfuerzo valió la pena, ¡sigue con esa energía!",
+      "¡Qué alegría! Esa palabra no tenía secretos para ti.",
+      "¡Eso, campeón! Avanzamos a paso firme por el sendero mágico.",
+      "¡Extraordinario! Diste exactamente con el número de golpes de voz.",
+      "¡Toma castaña! ¡Esa respuesta fue de diez sobre diez!",
+      "¡Lo lograste! Hasta los pajaritos del bosque están aplaudiendo.",
+      "¡De maravilla! Tienes un talento especial para escuchar las palabras.",
+      "¡Qué crack! Me dejas con la boquita abierta de lo rápido que lo hiciste.",
+      "¡Súper bien! Sigamos así, que vas imparable.",
+      "¡Pum, acertaste! ¡Las sílabas salieron bailando de contentas!"
     ],
+
+    // Elogios especiales cuando el niño acumula aciertos seguidos (racha)
+    streak: [
+      "¡Madre mía, llevas una racha encendida! ¡Vas como un cohete!",
+      "¡Acierto tras acierto! ¡Nadie te puede detener hoy!",
+      "¡Guau, estrella tras estrella! ¡Eres una máquina de acertar!",
+      "¡Imparable! Mis orejitas no dan crédito de lo bien que lo estás haciendo.",
+      "¡Qué racha tan fabulosa! El bosque entero brilla con tus aciertos.",
+      "¡Fuego en las piedras! ¡Estás en tu mejor momento, amiguito!",
+      "¡Qué maestría! Llevas varias seguidas perfectas.",
+      "¡Sigue la racha dorada! Eres el rey de los golpes de voz.",
+      "¡Vaya puntería! Acierto tras acierto sin dudar ni un segundo.",
+      "¡Una racha espectacular! ¡Choca esas patitas conmigo!",
+      "¡Esto es una fiesta de estrellas! ¡Qué orgullo ser tu amigo ratón!",
+      "¡Impresionante seguidilla! Tienes una concentración de campeón."
+    ],
+
+    // Frases gentiles, cariñosas y motivadoras ante una equivocación
     incorrect: [
-      "¡Casi casi! No te preocupes, escucha la palabra conmigo y contemos juntos.",
-      "¡Buen intento! Da palmadas al decirla para sentir cada sílaba.",
-      "¡Tranquilo amiguito! Los grandes exploradores aprenden practicando.",
-      "¡No pasa nada! Prueba de nuevo, tú puedes lograrlo."
+      "¡Casi, casi! Estuviste a un pelito de acertar. ¡Probemos de nuevo!",
+      "¡No te preocupes! Las palabras a veces son juguetonas, escucha conmigo y contemos juntos.",
+      "¡Buen intento, amiguito! Hasta los ratones sabios nos equivocamos a veces.",
+      "¡Tranquilo! Da palmadas despacito con tus manos, verás cómo sale.",
+      "¡No pasa nada! Respira hondo, escucha bien el sonido y verás que tú puedes.",
+      "¡Cerca, muy cerca! Escúchala una vez más y siente cada pedacito de la palabra.",
+      "¡Ánimo, campeón! Los grandes exploradores aprenden practicando una y otra vez.",
+      "¡Uy, se nos escapó por poquito! Pero la próxima seguro que es tuya.",
+      "¡Tranquilito, corazón! No hay prisa, tómate tu tiempo y vuelve a intentarlo.",
+      "¡Buen esfuerzo! Recuerda que cada trocito de voz cuenta. ¡Vamos de nuevo!",
+      "¡No te rindas! Yo creo en ti y sé que la próxima la vas a clavar.",
+      "¡Así se aprende! Los tropiezos nos ayudan a escuchar mejor. ¡Tú puedes!",
+      "¡Por un pelito de ratón! Pulsa el botón de palmadas para que lo hagamos juntos.",
+      "¡No pasa nada, amiguito! Sonríe y vamos a intentarlo otra vez con ganas.",
+      "¡Casi lo atrapas! Escucha el eco de la palabra y cuéntala conmigo.",
+      "¡Buen intento! Cada intento te hace más listo y más veloz."
     ],
+
+    // Frases de espera paciente y reflexiva cuando el niño se queda pensando
     thinking: [
-      "Mmm... ¿quieres una pista? Puedes pulsar el botón de palmadas.",
-      "Tómate tu tiempo, da palmadas con tus manos para contar los golpes de voz.",
-      "¿Será cortita o tendrá más sílabas? ¡Tú puedes descubrirlo!"
+      "Mmm... ¿quieres una ayudita? Puedes pulsar el botón de palmadas para escucharla despacito.",
+      "Tómate todo el tiempo que necesites, amiguito. Pensar con calma es de exploradores sabios.",
+      "¿Sientes el ritmo en tu cabeza? Pronuncia la palabra en voz alta y da un aplauso por cada golpe.",
+      "Aquí estoy acompañándote, amiguito. No hay ningún apuro, diviértete buscando la respuesta.",
+      "Mmm, déjame pensar a mí también... ¿será cortita o tendrá varias sílabas?",
+      "¿Quieres que la repita? Toca la tarjeta o el botón de escuchar cuando quieras.",
+      "Prueba a decirla como si cantaras una cancioncita: cada pedacito es una sílaba.",
+      "Mis bigotitos me dicen que ya casi tienes la respuesta en la punta de la lengua.",
+      "¡Tú puedes descubrirlo! Cuenta con los deditos de tu mano mientras la dices.",
+      "A veces ayuda cerrar los ojitos y escuchar cómo suena la palabra por dentro.",
+      "Si tienes dudas, ¡dale una palmada al aire! Tu cuerpo sabe el ritmo.",
+      "Aquí te espero pacientemente, amiguito. ¡Confío plenamente en tu oído!",
+      "Mmm... ¿será de uno, dos, tres o cuatro saltos? ¡Tú eliges!",
+      "¡Tómate tu tiempo! Pensar las cosas con calma hace que aprendamos mucho mejor.",
+      "Recuerda que si necesitas ayuda, el botón de palmadas te muestra el camino.",
+      "¡Vamos, pequeño detective! La respuesta está esperando por ti."
     ],
+
+    // Frases cariñosas y juguetonas cuando el niño toca a Silabín
     tickle: [
-      "¡Jijiji, eso me da cosquillas en los bigotes! ¡Sigamos jugando!",
-      "¡Aquí estoy contigo! ¡Vamos a aprender muchas palabras!",
-      "¡Choca la patita! ¡Eres mi mejor amigo explorador!"
+      "¡Jijijiji, eso me da muchas cosquillas en la pancita!",
+      "¡Ay, mis bigotes! ¡Se me erizan de tanta risa, jijiji!",
+      "¡Jajaja, para, para, que me caigo de la risa! ¡Eres muy simpático!",
+      "¡Choca la patita, amiguito! ¡Me encanta cuando me saludas!",
+      "¡Jijiji, me hiciste cosquillitas detrás de las orejas!",
+      "¡Uy, qué cosquillas! ¡Casi salto hasta el techo del bosque!",
+      "¡Aquí estoy contigo, siempre listo para ayudarte en la aventura!",
+      "¡Jajaja, mi colita está dando vueltas de pura felicidad!",
+      "¡Jijiji, cuidado con mis patitas que son muy sensibles a las cosquillas!",
+      "¡Qué cosquilloso soy! ¡Ven, choquemos esos cinco mágicos!",
+      "¡Jajaja, me haces reír tanto que casi se me cae mi pedazo de queso!",
+      "¡Eres el mejor compañero de juegos del mundo entero!",
+      "¡Jijiji, un abracito de ratón para ti con todo mi cariño!",
+      "¡Ay, mis orejitas traviesas! Se mueven cuando estás cerca.",
+      "¡Jajaja, qué buen cosquilleo! ¡Vamos a seguir descubriendo palabras!",
+      "¡Ji ji ji! ¡Eres genial, me alegra mucho jugar a tu lado!"
+    ],
+
+    // Frases de palmadas interactivas
+    clapping: [
+      "¡Aplaude conmigo! Vamos a sentir el ritmo de cada trocito.",
+      "¡Escucha qué claro se oye cuando damos palmadas juntos!",
+      "¡Uno, dos, tres! Cada palmada es un paso en el camino.",
+      "¡Siente la música de la palabra en tus manitas!",
+      "¡Qué bien suena! Las palmadas nunca se equivocan.",
+      "¡Eso es! Al aplaudir separamos los golpes de voz fácilmente.",
+      "¡Mira cómo aplaudo yo también con mis patitas!",
+      "¡Con ritmo y compás, las sílabas contarás!",
+      "¡Las palmas mágicas revelan el secreto de la palabra!",
+      "¡Qué divertido es aplaudir las palabras! ¿Lo intentamos en voz alta?",
+      "¡Palmadas arriba! Así los sonidos se quedan grabados en la memoria.",
+      "¡Siente cada golpe en el aire con alegría!"
+    ],
+
+    // Frases triunfales de victoria al ganar el diploma
+    victory: [
+      "¡FANTÁSTICO, LO LOGRASTE! ¡Has completado todo el camino y ganado tu diploma de honor!",
+      "¡HURRAAAA! ¡Eres un verdadero maestro de las sílabas! ¡Qué orgullo tan grande siento de ti!",
+      "¡Victoria total! Cruzamos todas las piedras mágicas gracias a tu talento y oído de campeón.",
+      "¡Aplausos y confeti para ti! Eres oficialmente el Gran Detective de Palabras del reino.",
+      "¡Lo conseguiste, amiguito! Tu diploma brilla más que el sol. ¡Felicidades de todo corazón!",
+      "¡Qué proeza tan maravillosa! Has demostrado ser todo un genio descubriendo sonidos.",
+      "¡Bailando de felicidad! Has completado el mapa completo. ¡Te mereces este gran premio!",
+      "¡Misión cumplida! Todo el bosque está de fiesta celebrando tu victoria.",
+      "¡Un aplauso gigante para el mejor explorador de todos los tiempos! ¡Felicidades!",
+      "¡Qué logro tan asombroso! Eres un ejemplo de alegría, paciencia y sabiduría."
     ]
   };
 
@@ -1121,7 +1242,8 @@
     triggerInteractiveClapping(wordObj) {
       this.sound.playPop();
       this.renderSyllableChips(wordObj.syllables, true);
-      this.showCloud(`👏 ¡Contemos ${wordObj.syllables.length} palmadas! 👏`);
+      const clapIntro = this.pickRandom(DIALOGUES.clapping);
+      this.showCloud(`👏 ${clapIntro}`);
 
       const clappingOverlay = document.getElementById('visual-clapping-hands');
       const counterBadge = document.getElementById('clapping-counter-badge');
@@ -1169,7 +1291,7 @@
       }, totalDuration + 800);
 
       const countText = wordObj.count === 1 ? 'una sílaba' : `${wordObj.count} sílabas`;
-      const phrase = `¡Demos palmadas! ${wordObj.syllables.join(', ')}. ¡Tiene ${countText}!`;
+      const phrase = `${clapIntro} ${wordObj.syllables.join(', ')}. ¡Tiene ${countText}!`;
       setTimeout(() => {
         this.sound.speakFriendly(phrase);
       }, totalDuration + 500);
@@ -1259,7 +1381,11 @@
         this.characterEl.classList.add('character-hop');
         setTimeout(() => this.characterEl.classList.remove('character-hop'), 650);
 
-        const cheerPhrase = this.pickRandom(DIALOGUES.correct);
+        let cheerPhrase = this.pickRandom(DIALOGUES.correct);
+        if (this.streakCount >= 3 && Math.random() < 0.65) {
+          const streakPhrase = this.pickRandom(DIALOGUES.streak);
+          cheerPhrase = `${streakPhrase} ${cheerPhrase}`;
+        }
         this.showCloud(`✨ ${cheerPhrase}`);
 
         if (typeof confetti === 'function') {
@@ -1357,7 +1483,10 @@
         });
       }
 
-      this.sound.speakFriendly("¡Fantástico! ¡Has completado todo el camino y ganado tu diploma!", () => {
+      const victoryPhrase = this.pickRandom(DIALOGUES.victory);
+      this.showCloud("🏆 ¡VICTORIA TOTAL! 🌟");
+
+      this.sound.speakFriendly(victoryPhrase, () => {
         setTimeout(() => {
           if (this.victoryModal) {
             this.victoryModal.classList.add('active');
