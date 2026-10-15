@@ -866,6 +866,45 @@
       return this.isMusicPlaying;
     }
 
+    sanitizeForSpeech(text) {
+      if (!text) return '';
+      return text
+        .replace(/ - /g, '... ')
+        // Prevenir expansiones químicas indeseadas en Web Speech API (ej: Na -> Sodio, Ca -> Calcio)
+        .replace(/\b[Nn]a\b/g, m => m === 'Na' ? 'Nah' : 'nah')
+        .replace(/\b[Cc]a\b/g, m => m === 'Ca' ? 'Cah' : 'cah')
+        .replace(/\b[Ff]e\b/g, m => m === 'Fe' ? 'Feh' : 'feh')
+        .replace(/\b[Bb]a\b/g, m => m === 'Ba' ? 'Bah' : 'bah')
+        .replace(/\b[Aa]l\b/g, m => m === 'Al' ? 'Ahl' : 'ahl')
+        .replace(/\b[Cc]o\b/g, m => m === 'Co' ? 'Coh' : 'coh')
+        .replace(/\b[Nn]i\b/g, m => m === 'Ni' ? 'Nih' : 'nih')
+        .replace(/\b[Cc]u\b/g, m => m === 'Cu' ? 'Cuh' : 'cuh')
+        .replace(/\b[Rr]a\b/g, m => m === 'Ra' ? 'Rah' : 'rah')
+        .replace(/\b[Pp]o\b/g, m => m === 'Po' ? 'Poh' : 'poh')
+        .replace(/\b[Hh]e\b/g, m => m === 'He' ? 'Eh' : 'eh')
+        .replace(/\bsi\b/g, 'sí')
+        .replace(/\bSi\b/g, 'Sí');
+    }
+
+    sanitizeSyllable(syl) {
+      if (!syl) return '';
+      const map = {
+        'na': 'nah', 'Na': 'Nah',
+        'ca': 'cah', 'Ca': 'Cah',
+        'fe': 'feh', 'Fe': 'Feh',
+        'ba': 'bah', 'Ba': 'Bah',
+        'al': 'ahl', 'Al': 'Ahl',
+        'co': 'coh', 'Co': 'Coh',
+        'ni': 'nih', 'Ni': 'Nih',
+        'cu': 'cuh', 'Cu': 'Cuh',
+        'ra': 'rah', 'Ra': 'Rah',
+        'po': 'poh', 'Po': 'Poh',
+        'he': 'eh',  'He': 'Eh',
+        'si': 'sí',  'Si': 'Sí'
+      };
+      return map[syl] || syl;
+    }
+
     speakFriendly(text, onComplete = null, pitch = 1.35, rate = 0.92) {
       if (!this.synth) {
         if (onComplete) onComplete();
@@ -877,9 +916,7 @@
       }
       this.synth.cancel();
 
-      const cleanText = text
-        .replace(/ - /g, ', ')
-        .replace(/ \.\.\. /g, ', ');
+      const cleanText = this.sanitizeForSpeech(text);
 
       const utterance = new SpeechSynthesisUtterance(cleanText);
       utterance.lang = this.friendlyVoice ? this.friendlyVoice.lang : 'es-ES';
@@ -897,9 +934,15 @@
       };
 
       let completed = false;
+      let fallbackTimer = null;
+
       const finishSpeaking = () => {
         if (completed) return;
         completed = true;
+        if (fallbackTimer) {
+          clearTimeout(fallbackTimer);
+          fallbackTimer = null;
+        }
         const mouth = document.getElementById('raton-mouth');
         if (mouth) mouth.classList.remove('mouth-talking');
         const badge = document.getElementById('mouse-speech-badge');
@@ -911,9 +954,9 @@
       utterance.onend = finishSpeaking;
       utterance.onerror = finishSpeaking;
 
-      // Respaldo de seguridad holgado que NUNCA interrumpe el habla natural
-      const estimatedDurationMs = Math.max(8000, Math.ceil(cleanText.length * 115) + 4000);
-      setTimeout(() => {
+      // Respaldo de seguridad holgado que nunca interrumpe el habla natural
+      const estimatedDurationMs = Math.max(9000, Math.ceil(cleanText.length * 130) + 4000);
+      fallbackTimer = setTimeout(() => {
         finishSpeaking();
       }, estimatedDurationMs);
 
@@ -935,19 +978,30 @@
       this.streakCount = 0;
       this.thinkingTimer = null;
       this.isLevelChanging = false;
+      this.isBusy = false;
 
       this.initDOM();
       this.bindEvents();
       this.loadWord(false);
-      this.resetThinkingTimer();
 
+      // Bloquear tablero durante la bienvenida inicial para que Silabín hable tranquilo
+      this.setBoardLocked(true);
       setTimeout(() => {
         const helloPhrase = this.pickRandom(DIALOGUES.welcome);
         this.showCloud("¡Hola amiguito! 🐭✨");
         this.sound.speakFriendly(helloPhrase, () => {
           setTimeout(() => {
             const cur = this.words[this.currentIndex];
-            if (cur) this.sound.speakFriendly(`Primera palabra: ${cur.word}`);
+            if (cur) {
+              if (cur.soundType) this.sound.playSpecialSfx(cur.soundType);
+              this.sound.speakFriendly(`Primera palabra: ${cur.word}`, () => {
+                this.setBoardLocked(false);
+                this.resetThinkingTimer();
+              });
+            } else {
+              this.setBoardLocked(false);
+              this.resetThinkingTimer();
+            }
           }, 600);
         });
       }, 700);
@@ -964,6 +1018,24 @@
 
     pickRandom(array) {
       return array[Math.floor(Math.random() * array.length)];
+    }
+
+    // Formatear sílabas fonéticamente para evitar que sintetizadores digan "sodio" o siglas
+    formatSyllablesForSpeech(syllables) {
+      if (!syllables || !syllables.length) return '';
+      return syllables
+        .map(s => this.sound.sanitizeSyllable(s))
+        .map(s => `¡${s}!`)
+        .join('... ');
+    }
+
+    setBoardLocked(locked) {
+      this.isBusy = !!locked;
+      this.stoneBtns?.forEach(btn => btn.classList.toggle('locked', locked));
+      this.agePills?.forEach(pill => pill.classList.toggle('locked', locked));
+      if (this.btnSpeak) this.btnSpeak.classList.toggle('locked', locked);
+      if (this.btnSyllables) this.btnSyllables.classList.toggle('locked', locked);
+      if (this.btnReset) this.btnReset.classList.toggle('locked', locked);
     }
 
     initDOM() {
@@ -1013,17 +1085,19 @@
           this.btnFullscreen.classList.remove('active');
         }
       });
-      // SELECTOR DE EDAD CON ANUNCIO COMPLETO
+
+      // SELECTOR DE EDAD CON ANUNCIO COMPLETO Y TIEMPO PROTEGIDO
       this.agePills.forEach(pill => {
         pill.addEventListener('click', () => {
           const age = pill.getAttribute('data-age');
-          if (age === this.selectedAge || this.isLevelChanging) return;
+          if (age === this.selectedAge || this.isBusy || this.isLevelChanging) return;
 
           this.sound.playPop();
           this.selectedAge = age;
           this.agePills.forEach(p => p.classList.toggle('active', p === pill));
 
           this.isLevelChanging = true;
+          this.setBoardLocked(true);
           clearTimeout(this.thinkingTimer);
 
           this.words = this.shuffle(WORDS_BY_AGE[this.selectedAge]);
@@ -1051,10 +1125,12 @@
                 if (cur.soundType) this.sound.playSpecialSfx(cur.soundType);
                 this.sound.speakFriendly(`La palabra es: ${cur.word}`, () => {
                   this.isLevelChanging = false;
+                  this.setBoardLocked(false);
                   this.resetThinkingTimer();
                 });
               } else {
                 this.isLevelChanging = false;
+                this.setBoardLocked(false);
               }
             }, 700);
           });
@@ -1071,6 +1147,7 @@
       // Clic en las piedras de gelatina (1, 2, 3, 4+)
       this.stoneBtns.forEach(btn => {
         btn.addEventListener('click', () => {
+          if (this.isBusy) return;
           this.resetThinkingTimer();
           const countChosen = parseInt(btn.getAttribute('data-syllable-count'), 10);
           this.handleAnswer(countChosen, btn);
@@ -1079,12 +1156,19 @@
 
       // Clic en el ratón
       this.characterEl?.addEventListener('click', () => {
+        if (this.isBusy) return;
+        this.setBoardLocked(true);
         this.sound.playPop();
         const ticklePhrase = this.pickRandom(DIALOGUES.tickle);
         this.characterEl.classList.add('character-hop');
         setTimeout(() => this.characterEl.classList.remove('character-hop'), 650);
         this.showCloud("¡Jijiji cosquillas! 🐭");
-        this.sound.speakFriendly(ticklePhrase);
+        this.sound.speakFriendly(ticklePhrase, () => {
+          setTimeout(() => {
+            this.setBoardLocked(false);
+            this.resetThinkingTimer();
+          }, 400);
+        });
       });
 
       // =====================================================================
@@ -1097,6 +1181,8 @@
           e.preventDefault();
           e.stopPropagation();
         }
+        if (this.isBusy) return;
+        this.setBoardLocked(true);
         this.sound.resume();
         this.resetThinkingTimer();
         const cur = this.words[this.currentIndex];
@@ -1106,7 +1192,14 @@
           this.characterEl.classList.add('character-hop');
           setTimeout(() => this.characterEl.classList.remove('character-hop'), 500);
           this.showCloud(`¡Escucha: ${cur.word}! 🔊`);
-          this.sound.speakFriendly(`La palabra es: ${cur.word}. ${cur.fact || ''}`);
+          this.sound.speakFriendly(`La palabra es: ${cur.word}. ${cur.fact || ''}`, () => {
+            setTimeout(() => {
+              this.setBoardLocked(false);
+              this.resetThinkingTimer();
+            }, 500);
+          });
+        } else {
+          this.setBoardLocked(false);
         }
       };
 
@@ -1116,11 +1209,20 @@
           e.preventDefault();
           e.stopPropagation();
         }
+        if (this.isBusy) return;
+        this.setBoardLocked(true);
         this.sound.resume();
         this.resetThinkingTimer();
         const cur = this.words[this.currentIndex];
         if (cur) {
-          this.triggerInteractiveClapping(cur);
+          this.triggerInteractiveClapping(cur, () => {
+            setTimeout(() => {
+              this.setBoardLocked(false);
+              this.resetThinkingTimer();
+            }, 600);
+          });
+        } else {
+          this.setBoardLocked(false);
         }
       };
 
@@ -1130,6 +1232,8 @@
           e.preventDefault();
           e.stopPropagation();
         }
+        if (this.isBusy) return;
+        this.setBoardLocked(true);
         this.sound.resume();
         this.sound.playPop();
         this.resetThinkingTimer();
@@ -1144,7 +1248,10 @@
           this.words = this.shuffle(WORDS_BY_AGE[this.selectedAge]);
           this.currentIndex = 0;
         }
-        this.loadWord(true);
+        this.loadWord(true, () => {
+          this.setBoardLocked(false);
+          this.resetThinkingTimer();
+        });
       };
 
       // Asignación directa y robusta a los botones
@@ -1188,11 +1295,15 @@
         this.updateStreakUI();
         this.words = this.shuffle(WORDS_BY_AGE[this.selectedAge]);
         this.currentIndex = 0;
-        this.loadWord(true);
+        this.loadWord(true, () => {
+          this.setBoardLocked(false);
+          this.resetThinkingTimer();
+        });
       });
 
       // Atajos de teclado: 1, 2, 3, 4, Espacio (Escuchar), P (Palmadas), S (Siguiente)
       window.addEventListener('keydown', (e) => {
+        if (this.isBusy) return;
         if (['1', '2', '3', '4'].includes(e.key)) {
           const targetBtn = document.querySelector(`.jelly-stone-btn[data-syllable-count="${e.key}"]`);
           if (targetBtn) targetBtn.click();
@@ -1227,10 +1338,12 @@
         if (isInteractive) {
           chip.addEventListener('click', (e) => {
             e.stopPropagation();
+            if (this.isBusy) return;
             this.sound.playPop();
             chip.classList.add('highlighted');
             setTimeout(() => chip.classList.remove('highlighted'), 380);
-            this.sound.speakFriendly(syl, null, 1.4, 0.85);
+            const safeSyl = this.sound.sanitizeSyllable(syl);
+            this.sound.speakFriendly(safeSyl, null, 1.4, 0.85);
           });
         }
 
@@ -1239,7 +1352,7 @@
     }
 
     // Efecto de palmadas rítmicas con animación visual en pantalla y conteo paso a paso
-    triggerInteractiveClapping(wordObj) {
+    triggerInteractiveClapping(wordObj, onDone = null) {
       this.sound.playPop();
       this.renderSyllableChips(wordObj.syllables, true);
       const clapIntro = this.pickRandom(DIALOGUES.clapping);
@@ -1291,9 +1404,12 @@
       }, totalDuration + 800);
 
       const countText = wordObj.count === 1 ? 'una sílaba' : `${wordObj.count} sílabas`;
-      const phrase = `${clapIntro} ${wordObj.syllables.join(', ')}. ¡Tiene ${countText}!`;
+      const syllablesFormatted = this.formatSyllablesForSpeech(wordObj.syllables);
+      const phrase = `${clapIntro} ${syllablesFormatted}. ¡Tiene ${countText}!`;
       setTimeout(() => {
-        this.sound.speakFriendly(phrase);
+        this.sound.speakFriendly(phrase, () => {
+          if (onDone) onDone();
+        });
       }, totalDuration + 500);
     }
 
@@ -1303,9 +1419,9 @@
         this.characterSvg.classList.remove('mouse-thinking');
       }
 
-      // Tiempo de espera generoso (15 segundos) para que el niño piense sin interrupciones
+      // Tiempo de espera generoso (18 segundos) para que el niño piense sin interrupciones
       this.thinkingTimer = setTimeout(() => {
-        if (this.isLevelChanging) return;
+        if (this.isLevelChanging || this.isBusy) return;
         if (this.characterSvg) {
           this.characterSvg.classList.add('mouse-thinking');
           const cur = this.words[this.currentIndex];
@@ -1315,17 +1431,20 @@
             this.sound.speakFriendly(thinkPhrase);
           }
         }
-      }, 15000);
+      }, 18000);
     }
 
-    loadWord(shouldPronounce = true) {
+    loadWord(shouldPronounce = true, onComplete = null) {
       if (this.currentIndex >= this.words.length) {
         this.words = this.shuffle(WORDS_BY_AGE[this.selectedAge]);
         this.currentIndex = 0;
       }
 
       const cur = this.words[this.currentIndex];
-      if (!cur) return;
+      if (!cur) {
+        if (onComplete) onComplete();
+        return;
+      }
 
       this.cardIllustration.innerText = cur.icon;
       this.cardTitle.innerText = cur.word;
@@ -1357,15 +1476,27 @@
         setTimeout(() => {
           if (!this.isLevelChanging) {
             if (cur.soundType) this.sound.playSpecialSfx(cur.soundType);
-            this.sound.speakFriendly(`Palabra: ${cur.word}`);
+            this.sound.speakFriendly(`Palabra: ${cur.word}`, () => {
+              if (onComplete) onComplete();
+            });
+          } else {
+            if (onComplete) onComplete();
           }
         }, 550);
+      } else {
+        if (onComplete) onComplete();
       }
     }
 
     handleAnswer(countChosen, btnElement) {
+      if (this.isBusy) return;
+      this.setBoardLocked(true);
+
       const cur = this.words[this.currentIndex];
-      if (!cur) return;
+      if (!cur) {
+        this.setBoardLocked(false);
+        return;
+      }
 
       const isCorrect = countChosen === cur.count;
 
@@ -1401,14 +1532,15 @@
         this.updateProgressUI();
 
         const syllableWordText = cur.count === 1 ? 'sílaba' : 'sílabas';
-        const fullPhrase = `${cheerPhrase}. ${cur.word} tiene ${cur.count} ${syllableWordText}: ${cur.syllables.join(', ')}`;
+        const formattedSyllables = this.formatSyllablesForSpeech(cur.syllables);
+        const fullPhrase = `${cheerPhrase}. ${cur.word} tiene ${cur.count} ${syllableWordText}: ${formattedSyllables}`;
 
         let hasAdvanced = false;
         const advanceSafely = () => {
           if (hasAdvanced) return;
           hasAdvanced = true;
 
-          // PAUSA CÓMODA Y TRANQUILA DE 2 SEGUNDOS DESPUÉS DE QUE TERMINE DE HABLAR COMPLETAMENTE
+          // Pausa cómoda de 1.5s después de que Silabín termine TODO su diálogo
           setTimeout(() => {
             if (this.scoreProgress >= this.totalSegments) {
               this.triggerStageVictory();
@@ -1418,18 +1550,16 @@
                 this.words = this.shuffle(WORDS_BY_AGE[this.selectedAge]);
                 this.currentIndex = 0;
               }
-              this.loadWord(true);
-              this.resetThinkingTimer();
+              this.loadWord(true, () => {
+                this.setBoardLocked(false);
+                this.resetThinkingTimer();
+              });
             }
-          }, 2000);
+          }, 1500);
         };
 
         // advanceSafely solo se dispara cuando el audio termina verdaderamente
         this.sound.speakFriendly(fullPhrase, advanceSafely);
-
-        // Respaldo de seguridad holgado para nunca cortar la voz
-        const maxWaitMs = Math.max(9000, Math.ceil(fullPhrase.length * 125) + 4000);
-        setTimeout(advanceSafely, maxWaitMs);
 
       } else {
         this.sound.playFail();
@@ -1441,7 +1571,12 @@
 
         const failPhrase = this.pickRandom(DIALOGUES.incorrect);
         this.showCloud(`¡Casi! Prueba otra vez 😊`);
-        this.sound.speakFriendly(failPhrase);
+        this.sound.speakFriendly(failPhrase, () => {
+          setTimeout(() => {
+            this.setBoardLocked(false);
+            this.resetThinkingTimer();
+          }, 600);
+        });
       }
     }
 
@@ -1462,7 +1597,7 @@
       this.cloudFeedback.style.display = 'block';
       setTimeout(() => {
         this.cloudFeedback.style.display = 'none';
-      }, 2400);
+      }, 2600);
     }
 
     updateProgressUI() {
@@ -1472,6 +1607,7 @@
     }
 
     triggerStageVictory() {
+      this.setBoardLocked(true);
       this.sound.playWin();
       this.characterEl.classList.add('character-dance');
 
@@ -1491,7 +1627,8 @@
           if (this.victoryModal) {
             this.victoryModal.classList.add('active');
           }
-        }, 600);
+          this.setBoardLocked(false);
+        }, 800);
       });
     }
   }

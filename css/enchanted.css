@@ -570,7 +570,20 @@ body {
   40%, 80% { transform: translateX(12px); }
 }
 
-/* ==========================================================================
+.jelly-stone-btn.locked {
+  pointer-events: none !important;
+  opacity: 0.88;
+  filter: brightness(0.96);
+  cursor: not-allowed !important;
+}
+
+.btn-nav-action.locked,
+.age-pill-btn.locked {
+  pointer-events: none !important;
+  opacity: 0.82;
+  cursor: not-allowed !important;
+}
+
    BOTONES INFERIORES NATIVOS Y ROBUSTOS
    ========================================================================== */
 .bottom-nav-controls {
