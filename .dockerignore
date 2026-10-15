@@ -1,0 +1,9 @@
+.git
+.gitignore
+.dockerignore
+*.log
+scratch/
+server.ps1
+docker-start.bat
+docker-start.sh
+README.md

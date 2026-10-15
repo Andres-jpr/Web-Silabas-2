@@ -1,0 +1,932 @@
+/* ==========================================================================
+   SYLLABUS-9: ACADEMIA INTERGALÁCTICA DE SÍLABAS
+   Diseño Arcade / Sci-Fi espacial para estudiantes de 8 a 11 años
+   ========================================================================== */
+
+:root {
+  --bg-deep: #080B16;
+  --bg-surface: rgba(17, 24, 39, 0.75);
+  --bg-surface-elevated: rgba(30, 41, 59, 0.85);
+  --border-glow: rgba(0, 240, 255, 0.25);
+  
+  --cyan-neon: #00F0FF;
+  --purple-neon: #8B5CF6;
+  --rose-neon: #F43F5E;
+  --yellow-neon: #FBBF24;
+  --green-neon: #10B981;
+  
+  --text-primary: #F8FAFC;
+  --text-secondary: #94A3B8;
+  --text-muted: #64748B;
+  
+  --font-display: 'Orbitron', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-body: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  
+  --shadow-neon-cyan: 0 0 20px rgba(0, 240, 255, 0.35);
+  --shadow-neon-purple: 0 0 20px rgba(139, 92, 246, 0.35);
+  --shadow-neon-rose: 0 0 20px rgba(244, 63, 94, 0.35);
+  --shadow-neon-gold: 0 0 20px rgba(251, 191, 36, 0.35);
+
+  --radius-lg: 20px;
+  --radius-md: 14px;
+  --radius-sm: 8px;
+  --transition-fast: 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-bounce: 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* --- RESET Y BASE --- */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background-color: var(--bg-deep);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Lienzo de estrellas de fondo */
+#space-stars-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Efectos de nebulosa ambiental */
+.ambient-nebula {
+  position: fixed;
+  width: 50vw;
+  height: 50vw;
+  border-radius: 50%;
+  filter: blur(120px);
+  opacity: 0.15;
+  pointer-events: none;
+  z-index: 0;
+}
+.nebula-1 {
+  top: -10vw;
+  left: -10vw;
+  background: radial-gradient(circle, var(--cyan-neon), transparent 70%);
+}
+.nebula-2 {
+  bottom: -15vw;
+  right: -10vw;
+  background: radial-gradient(circle, var(--purple-neon), transparent 70%);
+}
+
+/* Contenedor Principal */
+.app-container {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 16px 24px 40px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* ==========================================================================
+   CABECERA & HUD DE LA NAVE (ARCADE DASHBOARD)
+   ========================================================================== */
+.ship-hud-header {
+  background: var(--bg-surface);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-lg);
+  padding: 16px 24px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  margin-bottom: 20px;
+}
+
+.brand-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.ship-logo-icon {
+  font-size: 2.2rem;
+  filter: drop-shadow(0 0 10px var(--cyan-neon));
+  animation: floatSubtle 3s ease-in-out infinite;
+}
+.brand-title {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 900;
+  letter-spacing: 2px;
+  background: linear-gradient(135deg, #FFFFFF 0%, var(--cyan-neon) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.brand-subtitle {
+  font-size: 0.75rem;
+  color: var(--cyan-neon);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+/* Estadísticas del HUD */
+.hud-metrics-bar {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.hud-metric-box {
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-sm);
+  padding: 6px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.hud-label {
+  font-size: 0.65rem;
+  font-family: var(--font-display);
+  color: var(--text-secondary);
+  letter-spacing: 1px;
+}
+.hud-value {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--cyan-neon);
+  text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+}
+
+/* Racha de Combo */
+.streak-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.streak-tag {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  font-weight: 800;
+  font-family: var(--font-display);
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+.streak-tag.active-fire {
+  background: linear-gradient(135deg, #FF0055, #FF9900);
+  color: #FFF;
+  box-shadow: 0 0 15px rgba(255, 153, 0, 0.6);
+  animation: pulseGlow 1.2s infinite alternate;
+}
+
+/* Barra de Energía del Hiperimpulsor */
+.hyperdrive-energy-module {
+  min-width: 170px;
+}
+.energy-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.65rem;
+  font-family: var(--font-display);
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+.energy-progress-track {
+  width: 100%;
+  height: 10px;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  position: relative;
+}
+.energy-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--cyan-neon), var(--purple-neon), var(--rose-neon));
+  border-radius: 10px;
+  transition: width 0.3s ease;
+  box-shadow: 0 0 12px var(--cyan-neon);
+}
+
+/* Rango del Piloto */
+.pilot-rank-pill {
+  font-size: 0.75rem;
+  font-family: var(--font-display);
+  background: rgba(139, 92, 246, 0.18);
+  border: 1px solid var(--purple-neon);
+  color: #DDD6FE;
+  padding: 6px 14px;
+  border-radius: 20px;
+  letter-spacing: 0.5px;
+}
+
+/* Controles de Audio */
+.hud-audio-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.audio-toggle-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--text-primary);
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.1rem;
+  transition: var(--transition-fast);
+}
+.audio-toggle-btn:hover {
+  background: rgba(0, 240, 255, 0.2);
+  border-color: var(--cyan-neon);
+  transform: scale(1.08);
+}
+.audio-toggle-btn.muted {
+  opacity: 0.4;
+  filter: grayscale(1);
+}
+
+/* ==========================================================================
+   BARRA DE NAVEGACIÓN DE MODOS
+   ========================================================================== */
+.modes-navigation-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.mode-tab-btn {
+  background: var(--bg-surface);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--text-secondary);
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 10px 18px;
+  border-radius: 30px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: var(--transition-fast);
+  backdrop-filter: blur(10px);
+}
+.mode-tab-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--cyan-neon);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 240, 255, 0.2);
+}
+.mode-tab-btn.active {
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.25), rgba(139, 92, 246, 0.25));
+  border-color: var(--cyan-neon);
+  color: #FFF;
+  box-shadow: var(--shadow-neon-cyan);
+}
+
+/* ==========================================================================
+   VISTAS Y SECCIONES
+   ========================================================================== */
+.app-view {
+  display: none;
+  animation: fadeIn 0.3s ease;
+}
+.app-view.active {
+  display: block;
+}
+
+/* ==========================================================================
+   MODO 1: MISIÓN PRINCIPAL (DRAG & DROP + ESTACIONES)
+   ========================================================================== */
+.mission-center-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+/* Tarjeta Holográfica de Palabra */
+.hologram-word-card {
+  background: linear-gradient(145deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95));
+  border: 2px solid rgba(0, 240, 255, 0.4);
+  border-radius: var(--radius-lg);
+  padding: 24px 36px;
+  max-width: 580px;
+  width: 100%;
+  text-align: center;
+  position: relative;
+  cursor: grab;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6), inset 0 0 25px rgba(0, 240, 255, 0.15);
+  backdrop-filter: blur(16px);
+  user-select: none;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+}
+.hologram-word-card:active {
+  cursor: grabbing;
+}
+.hologram-word-card.is-dragging {
+  opacity: 0.5;
+  transform: scale(0.95);
+}
+.hologram-word-card:hover {
+  border-color: var(--cyan-neon);
+  box-shadow: 0 20px 50px rgba(0, 240, 255, 0.3), inset 0 0 30px rgba(0, 240, 255, 0.2);
+}
+
+.card-top-metadata {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.category-badge {
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  color: var(--cyan-neon);
+  letter-spacing: 1.5px;
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+.instruction-pill {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* Texto de la palabra */
+.word-target-title {
+  font-family: var(--font-body);
+  font-size: 3.2rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #FFFFFF;
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
+  margin-bottom: 8px;
+  line-height: 1.2;
+}
+
+/* Contenedor de Sílabas Reveladas */
+.syllables-preview-container {
+  display: none;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.syllable-pill {
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.2), rgba(139, 92, 246, 0.25));
+  border: 2px solid var(--cyan-neon);
+  border-radius: var(--radius-md);
+  padding: 10px 20px;
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #FFFFFF;
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
+  position: relative;
+}
+.syllable-pill::after {
+  content: attr(data-index);
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: var(--purple-neon);
+  color: #FFF;
+  font-size: 0.7rem;
+  font-family: var(--font-display);
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 8px var(--purple-neon);
+}
+
+/* Pista */
+.word-hint {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+}
+
+/* Barra de herramientas de la palabra */
+.word-action-tools {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+.tool-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: var(--transition-fast);
+}
+.tool-btn:hover {
+  background: rgba(0, 240, 255, 0.2);
+  border-color: var(--cyan-neon);
+  transform: translateY(-2px);
+}
+
+/* ==========================================================================
+   ESTACIONES DE ENERGÍA (CLASSIFICATION DOCKS)
+   ========================================================================== */
+.classification-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+  width: 100%;
+}
+
+.classification-dock {
+  background: var(--bg-surface);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-lg);
+  padding: 24px 18px;
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  backdrop-filter: blur(12px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+}
+
+/* Estilos individuales por categoría */
+.classification-dock[data-target-type="monosilaba"] {
+  border-color: rgba(0, 240, 255, 0.3);
+}
+.classification-dock[data-target-type="monosilaba"]:hover,
+.classification-dock[data-target-type="monosilaba"].dock-hover {
+  border-color: var(--cyan-neon);
+  box-shadow: var(--shadow-neon-cyan);
+  background: rgba(0, 240, 255, 0.12);
+}
+
+.classification-dock[data-target-type="bisilaba"] {
+  border-color: rgba(139, 92, 246, 0.3);
+}
+.classification-dock[data-target-type="bisilaba"]:hover,
+.classification-dock[data-target-type="bisilaba"].dock-hover {
+  border-color: var(--purple-neon);
+  box-shadow: var(--shadow-neon-purple);
+  background: rgba(139, 92, 246, 0.12);
+}
+
+.classification-dock[data-target-type="trisilaba"] {
+  border-color: rgba(244, 63, 94, 0.3);
+}
+.classification-dock[data-target-type="trisilaba"]:hover,
+.classification-dock[data-target-type="trisilaba"].dock-hover {
+  border-color: var(--rose-neon);
+  box-shadow: var(--shadow-neon-rose);
+  background: rgba(244, 63, 94, 0.12);
+}
+
+.classification-dock[data-target-type="polisilaba"] {
+  border-color: rgba(251, 191, 36, 0.3);
+}
+.classification-dock[data-target-type="polisilaba"]:hover,
+.classification-dock[data-target-type="polisilaba"].dock-hover {
+  border-color: var(--yellow-neon);
+  box-shadow: var(--shadow-neon-gold);
+  background: rgba(251, 191, 36, 0.12);
+}
+
+.dock-badge-num {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.dock-icon {
+  font-size: 2.8rem;
+  margin-bottom: 10px;
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.2));
+  transition: transform 0.2s ease;
+}
+.classification-dock:hover .dock-icon {
+  transform: scale(1.15) translateY(-4px);
+}
+
+.dock-title {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+.dock-syllable-count {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+.dock-hint-subtext {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* Atajos de teclado en las estaciones */
+.dock-key-shortcut {
+  margin-top: 12px;
+  font-family: var(--font-display);
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  background: rgba(0, 0, 0, 0.4);
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Efectos de pulso en evaluación */
+.zone-flash-success {
+  animation: flashSuccess 0.5s ease-out;
+}
+.zone-flash-error {
+  animation: flashError 0.5s ease-out;
+}
+
+@keyframes flashSuccess {
+  0% { transform: scale(1); filter: brightness(1); }
+  50% { transform: scale(1.06); filter: brightness(1.7); box-shadow: 0 0 35px var(--green-neon); }
+  100% { transform: scale(1); filter: brightness(1); }
+}
+
+@keyframes flashError {
+  0% { transform: scale(1); }
+  25% { transform: scale(0.96) translateX(-8px); filter: brightness(1.4); box-shadow: 0 0 25px var(--rose-neon); }
+  75% { transform: scale(0.96) translateX(8px); }
+  100% { transform: scale(1); }
+}
+
+/* ==========================================================================
+   MODO 2: CONTRARRELOJ (ARCADE 60s)
+   ========================================================================== */
+.arcade-header-status {
+  background: var(--bg-surface);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  text-align: center;
+  margin-bottom: 24px;
+}
+.arcade-timer-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.timer-icon {
+  font-size: 2rem;
+  animation: pulseGlow 1s infinite alternate;
+}
+.timer-digits {
+  font-family: var(--font-display);
+  font-size: 3.5rem;
+  font-weight: 900;
+  color: var(--rose-neon);
+  text-shadow: 0 0 25px rgba(244, 63, 94, 0.6);
+}
+.arcade-start-btn {
+  background: linear-gradient(135deg, var(--rose-neon), #FF7A00);
+  border: none;
+  color: #FFF;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 800;
+  padding: 12px 32px;
+  border-radius: 30px;
+  cursor: pointer;
+  box-shadow: 0 0 25px rgba(244, 63, 94, 0.5);
+  transition: var(--transition-bounce);
+}
+.arcade-start-btn:hover {
+  transform: scale(1.06);
+}
+
+/* ==========================================================================
+   MODO 3: CORTADOR LÁSER DE SÍLABAS
+   ========================================================================== */
+.cutter-stage-card {
+  background: var(--bg-surface);
+  border: 2px solid rgba(0, 240, 255, 0.3);
+  border-radius: var(--radius-lg);
+  padding: 36px 24px;
+  text-align: center;
+  max-width: 800px;
+  margin: 0 auto;
+}
+.cutter-instructions {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  margin-bottom: 30px;
+}
+.cutter-letters-stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 30px;
+}
+.cutter-letter-box {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-sm);
+  width: 56px;
+  height: 68px;
+  font-size: 2.2rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFF;
+}
+.cutter-laser-slot {
+  width: 22px;
+  height: 68px;
+  background: transparent;
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+}
+.cutter-laser-slot:hover {
+  background: rgba(0, 240, 255, 0.15);
+  border-color: var(--cyan-neon);
+}
+.cutter-laser-slot.cut-active {
+  background: linear-gradient(180deg, transparent, var(--cyan-neon), transparent);
+  border-color: var(--cyan-neon);
+  box-shadow: 0 0 16px var(--cyan-neon);
+}
+.cutter-laser-slot.cut-active::after {
+  content: "✂️";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.9rem;
+}
+
+/* ==========================================================================
+   MODO 4: ACADEMIA Y REGLAS PEDAGÓGICAS
+   ========================================================================== */
+.academy-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  gap: 20px;
+}
+.academy-card {
+  background: var(--bg-surface);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+.academy-card-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.academy-icon {
+  font-size: 2rem;
+}
+.academy-count-badge {
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-weight: 700;
+}
+.academy-desc {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+}
+.academy-examples-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.academy-example-pill {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--text-primary);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+.academy-example-pill:hover {
+  background: rgba(0, 240, 255, 0.2);
+  border-color: var(--cyan-neon);
+}
+
+/* Sección de Diptongos e Hiatos (para 9-11 años) */
+.advanced-phonetics-card {
+  margin-top: 24px;
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9));
+  border: 1px solid var(--purple-neon);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+}
+.advanced-phonetics-card h3 {
+  font-family: var(--font-display);
+  color: var(--purple-neon);
+  margin-bottom: 10px;
+}
+
+/* ==========================================================================
+   MODO 5: SALÓN DE TROFEOS
+   ========================================================================== */
+.trophies-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+.trophy-badge-card {
+  background: var(--bg-surface);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: var(--transition-fast);
+}
+.trophy-badge-card.unlocked {
+  border-color: var(--yellow-neon);
+  box-shadow: 0 0 20px rgba(251, 191, 36, 0.2);
+}
+.trophy-badge-card.locked {
+  opacity: 0.45;
+  filter: grayscale(1);
+}
+.trophy-icon {
+  font-size: 2.8rem;
+}
+.trophy-info h4 {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  margin-bottom: 4px;
+}
+.trophy-info p {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+.trophy-status {
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: var(--yellow-neon);
+}
+
+/* ==========================================================================
+   EFECTOS FLOTANTES & OVERLAYS
+   ========================================================================== */
+.floating-score-tag {
+  position: fixed;
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 900;
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%, -50%);
+}
+
+.hyperdrive-overlay-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(8, 11, 22, 0.85);
+  backdrop-filter: blur(14px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.banner-content {
+  text-align: center;
+  background: linear-gradient(145deg, #1E293B, #0F172A);
+  border: 2px solid var(--cyan-neon);
+  padding: 40px 60px;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 0 50px rgba(0, 240, 255, 0.5);
+}
+.banner-icon {
+  font-size: 4rem;
+  margin-bottom: 12px;
+  display: inline-block;
+}
+.banner-content h2 {
+  font-family: var(--font-display);
+  font-size: 2.4rem;
+  color: var(--cyan-neon);
+  margin-bottom: 10px;
+}
+.banner-bonus {
+  margin-top: 18px;
+  font-family: var(--font-display);
+  color: var(--yellow-neon);
+  font-size: 1.2rem;
+  font-weight: 800;
+}
+
+/* ==========================================================================
+   ANIMACIONES CLAVE
+   ========================================================================== */
+@keyframes floatSubtle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+@keyframes pulseGlow {
+  0% { transform: scale(1); filter: drop-shadow(0 0 5px rgba(255, 153, 0, 0.4)); }
+  100% { transform: scale(1.05); filter: drop-shadow(0 0 15px rgba(255, 153, 0, 0.9)); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ==========================================================================
+   RESPONSIVE DESIGN (TABLETS Y MÓVILES)
+   ========================================================================== */
+@media (max-width: 992px) {
+  .classification-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .ship-hud-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .hud-metrics-bar {
+    justify-content: space-between;
+  }
+  .word-target-title {
+    font-size: 2.4rem;
+  }
+  .classification-grid {
+    grid-template-columns: 1fr;
+  }
+  .cutter-letter-box {
+    width: 42px;
+    height: 54px;
+    font-size: 1.6rem;
+  }
+}

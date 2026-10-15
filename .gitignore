@@ -1,0 +1,14 @@
+# Archivos del sistema y logs
+*.log
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDEs y editores
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Docker local
+.docker/
