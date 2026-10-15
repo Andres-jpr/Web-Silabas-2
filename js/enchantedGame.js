@@ -548,21 +548,22 @@
       if (!this.synth) return;
       const selectBestVoice = () => {
         const voices = this.synth.getVoices();
+        // Priorizar voces neuronales naturales de alta calidad humana (Edge Natural, Chrome Google)
         this.friendlyVoice = voices.find(v => v.lang.startsWith('es') && (
-          v.name.includes('Sabina') || 
-          v.name.includes('Laura') || 
-          v.name.includes('Monica') || 
-          v.name.includes('Paulina') || 
-          v.name.includes('Paloma') || 
+          v.name.includes('Natural') || 
+          v.name.includes('Neural') ||
+          v.name.includes('Google') ||
+          v.name.includes('Dalia') ||
+          v.name.includes('Salma') ||
           v.name.includes('Elena') || 
           v.name.includes('Lucia') || 
-          v.name.includes('Helena') || 
-          v.name.includes('Dalia') ||
           v.name.includes('Camila') ||
-          v.name.includes('Mia') ||
           v.name.includes('Sofia') ||
-          v.name.includes('Natural') ||
-          v.name.includes('Google')
+          v.name.includes('Paloma') || 
+          v.name.includes('Paulina') || 
+          v.name.includes('Laura') || 
+          v.name.includes('Monica') || 
+          v.name.includes('Sabina')
         )) || voices.find(v => v.lang.startsWith('es')) || null;
       };
 
@@ -870,43 +871,20 @@
     sanitizeForSpeech(text) {
       if (!text) return '';
       return text
-        .replace(/ - /g, '... ')
-        // Prevenir expansiones químicas indeseadas en Web Speech API (ej: Na -> Sodio, Ca -> Calcio)
-        .replace(/\b[Nn]a\b/g, m => m === 'Na' ? 'Nah' : 'nah')
-        .replace(/\b[Cc]a\b/g, m => m === 'Ca' ? 'Cah' : 'cah')
-        .replace(/\b[Ff]e\b/g, m => m === 'Fe' ? 'Feh' : 'feh')
-        .replace(/\b[Bb]a\b/g, m => m === 'Ba' ? 'Bah' : 'bah')
-        .replace(/\b[Aa]l\b/g, m => m === 'Al' ? 'Ahl' : 'ahl')
-        .replace(/\b[Cc]o\b/g, m => m === 'Co' ? 'Coh' : 'coh')
-        .replace(/\b[Nn]i\b/g, m => m === 'Ni' ? 'Nih' : 'nih')
-        .replace(/\b[Cc]u\b/g, m => m === 'Cu' ? 'Cuh' : 'cuh')
-        .replace(/\b[Rr]a\b/g, m => m === 'Ra' ? 'Rah' : 'rah')
-        .replace(/\b[Pp]o\b/g, m => m === 'Po' ? 'Poh' : 'poh')
-        .replace(/\b[Hh]e\b/g, m => m === 'He' ? 'Eh' : 'eh')
-        .replace(/\bsi\b/g, 'sí')
-        .replace(/\bSi\b/g, 'Sí');
+        .replace(/ - /g, ', ')
+        // Prevenir que la sílaba aislada 'na' sea leída como 'sodio' en Windows SAPI
+        .replace(/\bNa\b/g, 'Ná')
+        .replace(/\bna\b/g, 'ná');
     }
 
     sanitizeSyllable(syl) {
       if (!syl) return '';
-      const map = {
-        'na': 'nah', 'Na': 'Nah',
-        'ca': 'cah', 'Ca': 'Cah',
-        'fe': 'feh', 'Fe': 'Feh',
-        'ba': 'bah', 'Ba': 'Bah',
-        'al': 'ahl', 'Al': 'Ahl',
-        'co': 'coh', 'Co': 'Coh',
-        'ni': 'nih', 'Ni': 'Nih',
-        'cu': 'cuh', 'Cu': 'Cuh',
-        'ra': 'rah', 'Ra': 'Rah',
-        'po': 'poh', 'Po': 'Poh',
-        'he': 'eh',  'He': 'Eh',
-        'si': 'sí',  'Si': 'Sí'
-      };
-      return map[syl] || syl;
+      // Solo 'na' requiere tilde fonética para no disparar expansión química de Sodio
+      if (syl.toLowerCase() === 'na') return 'ná';
+      return syl;
     }
 
-    speakFriendly(text, onComplete = null, pitch = 1.32, rate = 0.94) {
+    speakFriendly(text, onComplete = null, pitch = 1.0, rate = 0.95) {
       if (!this.synth) {
         if (onComplete) onComplete();
         return;
@@ -1050,7 +1028,7 @@
       if (!syllables || !syllables.length) return '';
       return syllables
         .map(s => this.sound.sanitizeSyllable(s))
-        .join('... ') + '.';
+        .join(', ');
     }
 
     setBoardLocked(locked) {
@@ -1367,7 +1345,7 @@
             chip.classList.add('highlighted');
             setTimeout(() => chip.classList.remove('highlighted'), 380);
             const safeSyl = this.sound.sanitizeSyllable(syl);
-            this.sound.speakFriendly(safeSyl, null, 1.4, 0.85);
+            this.sound.speakFriendly(safeSyl, null, 1.0, 0.95);
           });
         }
 
@@ -1429,7 +1407,7 @@
 
       const countText = wordObj.count === 1 ? 'una sílaba' : `${wordObj.count} sílabas`;
       const syllablesFormatted = this.formatSyllablesForSpeech(wordObj.syllables);
-      const phrase = `${clapIntro} ${syllablesFormatted}. ¡Tiene ${countText}!`;
+      const phrase = `${clapIntro} La palabra ${wordObj.word} tiene ${countText}: ${syllablesFormatted}.`;
       setTimeout(() => {
         this.sound.speakFriendly(phrase, () => {
           if (onDone) onDone();
