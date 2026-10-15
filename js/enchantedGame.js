@@ -906,20 +906,24 @@
       return map[syl] || syl;
     }
 
-    speakFriendly(text, onComplete = null, pitch = 1.35, rate = 0.92) {
-      // 1. Detener cualquier audio o síntesis en curso
-      if (this.currentAudio) {
-        try {
-          this.currentAudio.pause();
-          this.currentAudio.currentTime = 0;
-        } catch (e) {}
-        this.currentAudio = null;
+    speakFriendly(text, onComplete = null, pitch = 1.32, rate = 0.94) {
+      if (!this.synth) {
+        if (onComplete) onComplete();
+        return;
       }
 
-      if (this.synth) {
-        if (this.synth.paused) this.synth.resume();
-        this.synth.cancel();
+      // 1. Limpiar cualquier temporizador previo
+      if (this.safetyTimer) {
+        clearTimeout(this.safetyTimer);
+        this.safetyTimer = null;
       }
+
+      // 2. Si el sintetizador estaba hablando, cancelarlo de forma limpia
+      try {
+        if (this.synth.speaking || this.synth.pending) {
+          this.synth.cancel();
+        }
+      } catch (e) {}
 
       const cleanText = this.sanitizeForSpeech(text);
 
@@ -929,72 +933,59 @@
       if (badge) badge.classList.add('active');
 
       let completed = false;
-      let safetyTimer = null;
 
       const finishSpeaking = () => {
         if (completed) return;
         completed = true;
-        if (safetyTimer) {
-          clearTimeout(safetyTimer);
-          safetyTimer = null;
+
+        if (this.safetyTimer) {
+          clearTimeout(this.safetyTimer);
+          this.safetyTimer = null;
         }
-        if (this.currentAudio) {
-          this.currentAudio = null;
-        }
-        this.activeUtterance = null;
+
         if (mouth) mouth.classList.remove('mouth-talking');
         if (badge) badge.classList.remove('active');
-        if (onComplete) onComplete();
+        this.activeUtterance = null;
+
+        if (typeof onComplete === 'function') {
+          const cb = onComplete;
+          onComplete = null;
+          cb();
+        }
       };
 
       // Respaldo de seguridad holgado
-      const estimatedDurationMs = Math.max(9000, Math.ceil(cleanText.length * 130) + 4000);
-      safetyTimer = setTimeout(finishSpeaking, estimatedDurationMs);
+      const estimatedDurationMs = Math.max(6500, Math.ceil(cleanText.length * 120) + 3000);
+      this.safetyTimer = setTimeout(finishSpeaking, estimatedDurationMs);
 
-      // Fallback a SpeechSynthesis si Google TTS no tiene internet o se bloquea
-      const runWebSpeechFallback = () => {
-        if (!this.synth) {
+      // Esperar 45ms para que Chromium libere el buffer de voz anterior antes de encolar
+      setTimeout(() => {
+        try {
+          if (this.synth.paused) {
+            this.synth.resume();
+          }
+
+          const utterance = new SpeechSynthesisUtterance(cleanText);
+          utterance.lang = this.friendlyVoice ? this.friendlyVoice.lang : 'es-ES';
+          if (this.friendlyVoice) utterance.voice = this.friendlyVoice;
+          utterance.pitch = pitch;
+          utterance.rate = rate;
+
+          this.activeUtterance = utterance;
+
+          utterance.onend = () => {
+            finishSpeaking();
+          };
+
+          utterance.onerror = () => {
+            finishSpeaking();
+          };
+
+          this.synth.speak(utterance);
+        } catch (e) {
           finishSpeaking();
-          return;
         }
-        const utterance = new SpeechSynthesisUtterance(cleanText);
-        utterance.lang = this.friendlyVoice ? this.friendlyVoice.lang : 'es-ES';
-        if (this.friendlyVoice) utterance.voice = this.friendlyVoice;
-        utterance.pitch = pitch;
-        utterance.rate = rate;
-
-        this.activeUtterance = utterance;
-        utterance.onend = finishSpeaking;
-        utterance.onerror = finishSpeaking;
-        this.synth.speak(utterance);
-      };
-
-      // Intentar reproducir con Google TTS Audio Streaming (calidad nativa y perfecta en español)
-      try {
-        const encodedText = encodeURIComponent(cleanText);
-        const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=es&q=${encodedText}`;
-        const audio = new Audio(ttsUrl);
-        audio.crossOrigin = "anonymous";
-        this.currentAudio = audio;
-
-        audio.onended = () => {
-          finishSpeaking();
-        };
-
-        audio.onerror = () => {
-          // Si falla la conexión de red de Google TTS, fallback instantáneo al sintetizador
-          runWebSpeechFallback();
-        };
-
-        const playPromise = audio.play();
-        if (playPromise !== undefined) {
-          playPromise.catch(() => {
-            runWebSpeechFallback();
-          });
-        }
-      } catch (err) {
-        runWebSpeechFallback();
-      }
+      }, 45);
     }
   }
 
@@ -1059,8 +1050,7 @@
       if (!syllables || !syllables.length) return '';
       return syllables
         .map(s => this.sound.sanitizeSyllable(s))
-        .map(s => `¡${s}!`)
-        .join('... ');
+        .join('... ') + '.';
     }
 
     setBoardLocked(locked) {
@@ -1510,13 +1500,13 @@
         setTimeout(() => {
           if (!this.isLevelChanging) {
             if (cur.soundType) this.sound.playSpecialSfx(cur.soundType);
-            this.sound.speakFriendly(`Palabra: ${cur.word}`, () => {
+            this.sound.speakFriendly(`La palabra es: ${cur.word}`, () => {
               if (onComplete) onComplete();
             });
           } else {
             if (onComplete) onComplete();
           }
-        }, 550);
+        }, 500);
       } else {
         if (onComplete) onComplete();
       }
@@ -1574,7 +1564,7 @@
           if (hasAdvanced) return;
           hasAdvanced = true;
 
-          // Pausa cómoda de 1.5s después de que Silabín termine TODO su diálogo
+          // Pausa cómoda de 1.2s después de que Silabín termine TODO su diálogo
           setTimeout(() => {
             if (this.scoreProgress >= this.totalSegments) {
               this.triggerStageVictory();
@@ -1589,7 +1579,7 @@
                 this.resetThinkingTimer();
               });
             }
-          }, 1500);
+          }, 1200);
         };
 
         // advanceSafely solo se dispara cuando el audio termina verdaderamente
