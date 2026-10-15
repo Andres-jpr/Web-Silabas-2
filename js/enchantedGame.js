@@ -530,6 +530,7 @@
       this.synth = window.speechSynthesis || null;
       this.friendlyVoice = null;
       this.activeUtterance = null;
+      this.currentAudio = null;
       this.isMusicPlaying = false;
       this.musicInterval = null;
 
@@ -906,61 +907,94 @@
     }
 
     speakFriendly(text, onComplete = null, pitch = 1.35, rate = 0.92) {
-      if (!this.synth) {
-        if (onComplete) onComplete();
-        return;
+      // 1. Detener cualquier audio o síntesis en curso
+      if (this.currentAudio) {
+        try {
+          this.currentAudio.pause();
+          this.currentAudio.currentTime = 0;
+        } catch (e) {}
+        this.currentAudio = null;
       }
 
-      if (this.synth.paused) {
-        this.synth.resume();
+      if (this.synth) {
+        if (this.synth.paused) this.synth.resume();
+        this.synth.cancel();
       }
-      this.synth.cancel();
 
       const cleanText = this.sanitizeForSpeech(text);
 
-      const utterance = new SpeechSynthesisUtterance(cleanText);
-      utterance.lang = this.friendlyVoice ? this.friendlyVoice.lang : 'es-ES';
-      if (this.friendlyVoice) utterance.voice = this.friendlyVoice;
-      utterance.pitch = pitch;
-      utterance.rate = rate;
-
-      this.activeUtterance = utterance;
-
-      utterance.onstart = () => {
-        const mouth = document.getElementById('raton-mouth');
-        if (mouth) mouth.classList.add('mouth-talking');
-        const badge = document.getElementById('mouse-speech-badge');
-        if (badge) badge.classList.add('active');
-      };
+      const mouth = document.getElementById('raton-mouth');
+      const badge = document.getElementById('mouse-speech-badge');
+      if (mouth) mouth.classList.add('mouth-talking');
+      if (badge) badge.classList.add('active');
 
       let completed = false;
-      let fallbackTimer = null;
+      let safetyTimer = null;
 
       const finishSpeaking = () => {
         if (completed) return;
         completed = true;
-        if (fallbackTimer) {
-          clearTimeout(fallbackTimer);
-          fallbackTimer = null;
+        if (safetyTimer) {
+          clearTimeout(safetyTimer);
+          safetyTimer = null;
         }
-        const mouth = document.getElementById('raton-mouth');
-        if (mouth) mouth.classList.remove('mouth-talking');
-        const badge = document.getElementById('mouse-speech-badge');
-        if (badge) badge.classList.remove('active');
+        if (this.currentAudio) {
+          this.currentAudio = null;
+        }
         this.activeUtterance = null;
+        if (mouth) mouth.classList.remove('mouth-talking');
+        if (badge) badge.classList.remove('active');
         if (onComplete) onComplete();
       };
 
-      utterance.onend = finishSpeaking;
-      utterance.onerror = finishSpeaking;
-
-      // Respaldo de seguridad holgado que nunca interrumpe el habla natural
+      // Respaldo de seguridad holgado
       const estimatedDurationMs = Math.max(9000, Math.ceil(cleanText.length * 130) + 4000);
-      fallbackTimer = setTimeout(() => {
-        finishSpeaking();
-      }, estimatedDurationMs);
+      safetyTimer = setTimeout(finishSpeaking, estimatedDurationMs);
 
-      this.synth.speak(utterance);
+      // Fallback a SpeechSynthesis si Google TTS no tiene internet o se bloquea
+      const runWebSpeechFallback = () => {
+        if (!this.synth) {
+          finishSpeaking();
+          return;
+        }
+        const utterance = new SpeechSynthesisUtterance(cleanText);
+        utterance.lang = this.friendlyVoice ? this.friendlyVoice.lang : 'es-ES';
+        if (this.friendlyVoice) utterance.voice = this.friendlyVoice;
+        utterance.pitch = pitch;
+        utterance.rate = rate;
+
+        this.activeUtterance = utterance;
+        utterance.onend = finishSpeaking;
+        utterance.onerror = finishSpeaking;
+        this.synth.speak(utterance);
+      };
+
+      // Intentar reproducir con Google TTS Audio Streaming (calidad nativa y perfecta en español)
+      try {
+        const encodedText = encodeURIComponent(cleanText);
+        const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=es&q=${encodedText}`;
+        const audio = new Audio(ttsUrl);
+        audio.crossOrigin = "anonymous";
+        this.currentAudio = audio;
+
+        audio.onended = () => {
+          finishSpeaking();
+        };
+
+        audio.onerror = () => {
+          // Si falla la conexión de red de Google TTS, fallback instantáneo al sintetizador
+          runWebSpeechFallback();
+        };
+
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(() => {
+            runWebSpeechFallback();
+          });
+        }
+      } catch (err) {
+        runWebSpeechFallback();
+      }
     }
   }
 

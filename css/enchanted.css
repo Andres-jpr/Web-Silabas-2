@@ -577,19 +577,21 @@ body {
   cursor: not-allowed !important;
 }
 
-.btn-nav-action.locked,
+.nav-action-btn.locked,
 .age-pill-btn.locked {
   pointer-events: none !important;
   opacity: 0.82;
   cursor: not-allowed !important;
 }
 
+/* ==========================================================================
    BOTONES INFERIORES NATIVOS Y ROBUSTOS
    ========================================================================== */
 .bottom-nav-controls {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
   gap: clamp(20px, 4.5vw, 55px);
   margin-top: clamp(10px, 1.8vh, 18px);
   position: relative;
